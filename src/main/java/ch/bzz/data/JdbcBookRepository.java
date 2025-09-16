@@ -1,7 +1,7 @@
 package ch.bzz.data;
 
-import ch.bzz.Book;
 import ch.bzz.Config;
+import ch.bzz.Book;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -45,6 +45,34 @@ public class JdbcBookRepository implements BookRepository {
             }
         } catch (SQLException e) {
             System.err.println("Database error while finding all books: " + e.getMessage());
+        }
+        return books;
+    }
+
+    @Override
+    public List<Book> findAll(int limit) {
+        List<Book> books = new ArrayList<>();
+        String sql = "SELECT id, isbn, title, author, publication_year FROM books LIMIT ?";
+
+        try (Connection conn = DriverManager.getConnection(url, user, password);
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setInt(1, limit);
+            ResultSet rs = pstmt.executeQuery();
+
+            while (rs.next()) {
+                Book book = new Book(
+                        rs.getLong("id"),
+                        rs.getString("isbn"),
+                        rs.getString("title"),
+                        rs.getString("author"),
+                        rs.getInt("publication_year")
+                );
+                books.add(book);
+            }
+            rs.close();
+        } catch (SQLException e) {
+            System.err.println("Database error while finding all books with limit: " + e.getMessage());
         }
         return books;
     }
